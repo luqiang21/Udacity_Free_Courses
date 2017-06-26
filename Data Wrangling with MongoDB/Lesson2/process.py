@@ -77,14 +77,32 @@ def process_file(f):
     # will be a reference to the same info dictionary.
     with open("{}/{}".format(datadir, f), "r") as html:
 
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html,"lxml")
+
+        rows = soup.find_all('tr', 'dataTDRight')
+        for row in rows:
+            tds = row.find_all('td')
+            if tds[1].text != 'TOTAL':
+                info['year'] = int(tds[0].text)
+                info['month'] = int(tds[1].text)
+                # x = tds[3].text#.encode('utf-8').strip()
+                # print len(x), type(x), x.isnumeric()
+
+                if tds[3].text.isnumeric():
+                    tmp = int(tds[3].text.replace(',',''))
+                else:
+                    tmp = 0
+                info['flights'] = {'domestic': int(tds[2].text.replace(',','')),
+                                   'international': tmp}
+                data.append(info.copy())
+
 
     return data
 
 
 def test():
     print "Running a simple test..."
-    open_zip(datadir)
+    # open_zip(datadir)
     files = process_all(datadir)
     data = []
     # Test will loop over three data files.
