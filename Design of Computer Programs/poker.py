@@ -51,7 +51,7 @@ def allmax_(iterable, key=None):
 
 # flush: same suits
 # straight: consecutive
-def hand_rank(hand):
+def hand_rank_(hand):
     "Return a value indicating the ranking of a hand."
     ranks = card_ranks(hand)
     if straight(ranks) and flush(hand):            # straight flush
@@ -72,6 +72,41 @@ def hand_rank(hand):
         return (1, kind(2, ranks), ranks)
     else:                                          # high card
         return (0, ranks)
+
+'''DRY: don't repeat yourself'''
+# refactored version
+def hand_rank(hand):
+    "Return a value indicating how high the hand ranks"
+    # counts is the count of each rank; ranks lists corresponding ranks
+    # E.g. '7 T 7 9 7' => counts = (3, 1, 1); ranks = (7, 10, 9)
+    groups = group(['--23456789TJQKA'.index(r) for r,s in hand])
+    counts, ranks = unzip(groups)
+    if ranks == (14, 5, 4, 3, 2):
+        ranks = (5, 4, 3, 2, 1)
+    straight = len(ranks) == 5 and max(ranks) - min(ranks) == 4
+    flush = len(set([s for r,s in hand])) == 1
+    return (9 if (5,) == counts else
+            8 if straight and flush else
+            7 if (4, 1) == counts else
+            6 if (3, 2) == counts else
+            5 if flush else
+            4 if straight else
+            3 if (3, 1, 1) == counts else
+            2 if (2, 2, 1) == counts else
+            1 if (2, 1, 1, 1) == counts else
+            0), ranks
+    # can be replaced by more elegant expression
+    # return max(count_rankings[counts], 4*straight + 5*flush), ranks
+count_rankings = {(5,):10, (4, 1):7, (3, 2):6, (3, 1, 1):3, (2, 2, 1):2,
+                    (2, 1, 1, 1):1, (1, 1, 1, 1, 1):0}
+
+def group(items):
+    "Return a list of [(count, x)...], highest count first, then highest x first."
+    groups = [(items.count(x), x) for x in set(items)]
+    return sorted(groups, reverse=True)
+
+def unzip(pairs): return zip(*pairs)
+
 
 def card_ranks(hand):
     "Return a list of the ranks, sorted with higher first."
@@ -183,9 +218,9 @@ def test():
     assert poker([fh, fh]) == [fh,fh]
     assert poker([sf]) == [sf]
     assert poker([sf] + 99*[fh]) == [sf]
-    assert hand_rank(sf) == (8, 10)
-    assert hand_rank(fk) == (7, 9, 7)
-    assert hand_rank(fh) == (6, 10, 7)
+    assert hand_rank(sf) == (8, (10,9,8,7,6))#(8, 10)
+    assert hand_rank(fk) == (7, (9,7))
+    assert hand_rank(fh) == (6, (10,7))
 
 
     return "tests pass"
@@ -205,3 +240,18 @@ def hand_percentage(n=700*1000):
     for i in reversed(range(9)):
         print "%14s: %6.3f %%" % (hand_names[i], 100.*counts[i]/n)
 print hand_percentage()
+
+# shuffle algorithm
+def shuffle(deck):
+    "Knuth's Algorithm P."
+    N = len(deck)
+    for i in range(N-1):
+        swap(deck, i, random.randrange(i, N))
+    return deck
+
+def swap(deck, i, j):
+    "Swap elements i and j of a collection."
+    print 'swap', i, j
+    deck[i], deck[j] = deck[j], deck[i]
+deck = [1, 2, 3, 4]
+print deck, '\n', shuffle(deck)
