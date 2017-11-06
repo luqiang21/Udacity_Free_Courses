@@ -11,6 +11,21 @@
 # card_ranks(hand) returns an ORDERED tuple of the ranks
 #                  in a hand (where the order goes from
 #                  highest to lowest rank).
+
+import random # this will be a useful library for shuffling
+
+# This builds a deck of 52 cards. If you are unfamiliar
+# with this notation, check out Andy's supplemental video
+# on list comprehensions (you can find the link in the
+# Instructor Comments box below).
+
+mydeck = [r+s for r in '23456789TJQKA' for s in 'SHDC']
+
+def deal(numhands, n=5, deck=mydeck):
+    # shuffle the deck and deal out numhands n-card hands.
+    random.shuffle(deck)
+    return [deck[n*i:n*(i+1)] for i in range(numhands)]
+
 def poker(hands):
     "return the best hand: pocker([hand, ...]) => [hand, ...]"
     return allmax(hands, key=hand_rank)
@@ -20,6 +35,19 @@ def allmax(iterable, key=None):
     max_hand = max(iterable, key=key)
     key = key or (lambda x: x)
     return [hand for hand in iterable if key(hand) == key(max_hand)]
+
+# lesson version
+def allmax_(iterable, key=None):
+    "Return a list of all items equal to the max of the iterable."
+    result, maxval = [], None
+    key = key or (lambda x: x)
+    for x in iterable:
+        xval = key(x)
+        if not result or xval > maxval:
+            result, maxval = [x], xval
+        elif xval == maxval:
+            result.append(x)
+    return result
 
 # flush: same suits
 # straight: consecutive
@@ -101,7 +129,7 @@ def kind_(n, ranks):
 
     return None
 
-def two_pair_(ranks):
+def two_pair(ranks):
     """If there are two pair, return the two ranks as a
     tuple: (highest, lowest); otherwise return None."""
     pair = kind(2, ranks)
@@ -163,3 +191,17 @@ def test():
     return "tests pass"
 
 print test()
+
+hand_names = list(reversed(["Straight Flush", "4 of a kind", "Full house", "Flush",
+                "Straight", "3 of a kind", "2 pair", "Pair", "High card"]))
+def hand_percentage(n=700*1000):
+    "Sample n random hands and print a table of percentage for each type of hand."
+    counts = [0] * 9
+    for i in range(n/10):
+        for hand in deal(10):
+            ranking = hand_rank(hand)[0] # obtain the rank of this hand
+            counts[ranking] += 1
+
+    for i in reversed(range(9)):
+        print "%14s: %6.3f %%" % (hand_names[i], 100.*counts[i]/n)
+print hand_percentage()
